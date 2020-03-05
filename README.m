@@ -59,9 +59,7 @@ pValue = 1 - normcdf(localMaxAmp,bgMeanMaxF,bgStdMaxF); % At line 469
 % with the cands (candidates for signal) structure data plotted on top
 
 figure; imagesc(imageIntegF)
-hold on; structfun( @(x) plot(x.Lmax,'kx'), cands )
-hold on; arrayfun( @(x) plot(x.Lmax,'kx'), cands )
-hold on; arrayfun( @(x) plot([x.Lmax(1),x.Lmax(2)],'kx'), cands )
+hold on; arrayfun( @(x) plot(x.Lmax(2),x.Lmax(1),'wo'), cands )
 
 % Please check out the doc about structfun and arrayfun - we use these pretty extensively and they
 % save dozens of lines of code + time per day. 
