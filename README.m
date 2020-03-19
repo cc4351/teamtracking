@@ -1,12 +1,18 @@
 % In MATLAB:
 
-[movieParam,detectionParam] = makeParams( 'C:\u-track\#03Ch1\uTrackSettings.txt' )
+addpath('C:\teamtracking');
+
+[movieParam,detectionParam] = makeParams( 'C:\teamtracking\uTrackSettings-1.txt' )
 
 % Except replace the C:\u-track\ with the location where you placed the data we downloaded today
 
 % You can then execute the following, but I'd recommend placing a red dot at line 908 in detectSubResFeatures2D_StandAlone.m
 
-detectSubResFeatures2D_StandAlone(movieParam,detectionParam,0,0)
+%%
+
+[movieInfo,exceptions,localMaxima,background,psfSigma] = detectSubResFeatures2D_StandAlone(movieParam,detectionParam,0,1);
+
+%%
 
 % Once you're in there, you'll see all your workspace variables on the
 % right. You can obtain an image of the current frame going through the
