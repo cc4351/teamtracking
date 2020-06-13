@@ -4,7 +4,9 @@
 %
 % For now, this file will function as a log of what we do during our in-person meetings
 
-[movieParam,detectionParam] = makeParams( 'C:\u-track\#03Ch1\uTrackSettings.txt' )
+addpath('C:\teamtracking');
+
+[movieParam,detectionParam] = makeParams( 'C:\teamtracking\uTrackSettings-1.txt' )
 
 % Edit: 2/26/2020
 %
@@ -14,7 +16,11 @@
 
 % You can then execute the following, but I'd recommend placing a red dot at line 908 in detectSubResFeatures2D_StandAlone.m
 
-detectSubResFeatures2D_StandAlone(movieParam,detectionParam,0,0)
+%%
+
+[movieInfo,exceptions,localMaxima,background,psfSigma] = detectSubResFeatures2D_StandAlone(movieParam,detectionParam,0,1);
+
+%%
 
 % Once you're in there, you'll see all your workspace variables on the
 % right. You can obtain an image of the current frame going through the
@@ -59,9 +65,7 @@ pValue = 1 - normcdf(localMaxAmp,bgMeanMaxF,bgStdMaxF); % At line 469
 % with the cands (candidates for signal) structure data plotted on top
 
 figure; imagesc(imageIntegF)
-hold on; structfun( @(x) plot(x.Lmax,'kx'), cands )
-hold on; arrayfun( @(x) plot(x.Lmax,'kx'), cands )
-hold on; arrayfun( @(x) plot([x.Lmax(1),x.Lmax(2)],'kx'), cands )
+hold on; arrayfun( @(x) plot(x.Lmax(2),x.Lmax(1),'wo'), cands )
 
 % Please check out the doc about structfun and arrayfun - we use these pretty extensively and they
 % save dozens of lines of code + time per day. 
