@@ -236,7 +236,7 @@ options = optimset('Jacobian','on',...
 %reserve memory for clustersMMF
 numClusters = length(clusters);
 clustersMMF = repmat(struct('position',[],'amplitude',[],'bgAmp',[],...
-    'numDegFree',[],'residuals',[],'sigma',[], 'pValue', []),numClusters,1);
+    'numDegFree',[],'residuals',[],'sigma',[], 'pValue', [], 'resnorm', []),numClusters,1);
 
 %go over all clusters
 for i = 1 : numClusters
@@ -323,6 +323,7 @@ for i = 1 : numClusters
             lsqnonlin(@fitNGaussians2DVarSigma,x0,lb,ub,options,imageC,...
             clusterPixels);
         else
+            %ref: https://www.mathworks.com/help/optim/ug/lsqnonlin.html#d120e101162
             [solutionT,dummy,residualsT,dummy,dummy,dummy,jacMatT] = ...
             lsqnonlin(@fitNGaussians2D,x0,lb,ub,options,imageC,...
             clusterPixels,psfSigma);    
@@ -431,6 +432,7 @@ for i = 1 : numClusters
         %get p-value
         pValue = 1-tcdf(testStat,numDegFree);
         clustersMMF(i).pValue = pValue;
+        
         %find largest p-value and decide whether to remove one kernel,
         %repeat the fit and test again for amplitude
         pValueMax = max(pValue);
@@ -471,7 +473,7 @@ for i = 1 : numClusters
                     lsqnonlin(@fitNGaussians2DVarSigma,x0,lb,ub,options,imageC,...
                     clusterPixels);
                 else   
-                    [solution,dummy,residuals,dummy,dummy,dummy,jacMat] = ...
+                    [solution,resnorm,residuals,dummy,dummy,dummy,jacMat] = ...
                         lsqnonlin(@fitNGaussians2D,x0,lb,ub,options,imageC,...
                         clusterPixels,psfSigma);
                 end
@@ -512,7 +514,7 @@ for i = 1 : numClusters
                     %get p-value
                     pValue = 1-tcdf(testStat,numDegFree);
                     clustersMMF(i).pValue = pValue;
-                    
+                    clustersMMF(i).resnorm = resnorm;
                     %find largest p-value and decide whether to remove one kernel,
                     %repeat the fit and test again for amplitude
                     pValueMax = max(pValue);
@@ -674,14 +676,14 @@ for i = 1 : numClusters
             lsqnonlin(@fitNGaussians2DVarSigma,x0,lb,ub,options,imageC,...
             clusterPixels);
         else
-            [solution,dummy,residuals,dummy,dummy,dummy,jacMat] = ...
+            [solution,resnorm,residuals,dummy,dummy,dummy,jacMat] = ...
             lsqnonlin(@fitNGaussians2D,x0,lb,ub,options,imageC,...
             clusterPixels,psfSigma);
         end
         jacMat = full(jacMat);
         residuals = -residuals; %minus sign so that residuals = real image - model image
         residVar = sum(residuals.^2)/numDegFree;
-        
+         
         %calculate the parameters' variance-covariance matrix and get their
         %uncertainties
         varCovMat = residVar * inv(jacMat'*jacMat);
@@ -709,6 +711,30 @@ for i = 1 : numClusters
         clustersMMF(i).bgAmp = bgAmp;
         clustersMMF(i).numDegFree = numDegFree;
         clustersMMF(i).residuals = residuals;
+        
+        resGrid = zeros(256, 256);
+        for j = 1: length(clusterPixels)
+            loc = clusterPixels(j,:);
+            resGrid(loc(1), loc(2)) = residuals(j);
+        end
+        % note: better to get the positions first
+        tmpS = size(maximaPos);
+        for j = 1:tmpS(1)
+            pos = round(maximaPos(j, 1:2));
+            xNeighbor = [-1, -1, -1, 0, 0, 1, 1, 1, 0];
+            yNeighbor = [-1, 0, 1, -1, 1, -1, 0, 1, 0];
+            for k = 1: length(xNeighbor)
+                tmpX = pos(1)+xNeighbor(k);
+                tmpY = pos(2)+yNeighbor(k);
+                tmpF = resGrid(tmpX, tmpY);
+                if tmpF
+                    clustersMMF(i).resnorm(j, k) = tmpF;
+                end 
+            end
+        end
+        
+        
+        
         if varSigma
             clustersMMF(i).sigma = [solution(:,4) standDevVec(:,4)];
         end
@@ -778,6 +804,8 @@ if ~isempty(indx)
         detectedFeatures.amp = vertcat(clustersMMF.amplitude);
         detectedFeatures.sigma = vertcat(clustersMMF.sigma);
         detectedFeatures.pValue = vertcat(clustersMMF.pValue);
+        detectedFeatures.resnorm = vertcat(clustersMMF.resnorm);
+        
     end
     
 end %(if ~isempty(indx))
