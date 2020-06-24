@@ -413,6 +413,7 @@ for iWindow = 1 : numIntegWindow
         
         %filter integrated image
         %         imageIntegF = filterGauss2D(imageInteg,min(1,psfSigma));
+        % => for noise cancelling
         imageIntegF = filterGauss2D(imageInteg,psfSigma);
 
         %use robustMean to get mean and std of background intensities
@@ -878,7 +879,7 @@ end %(if numSigmaIter)
 
 %initialize movieInfo
 clear movieInfo
-movieInfo = repmat(struct('xCoord',[],'yCoord',[],'amp',[],'sigma',[], 'pValue', []),numImagesRaw,1);
+movieInfo = repmat(struct('xCoord',[],'yCoord',[],'amp',[],'sigma',[], 'pValue', [], 'resnorm', []),numImagesRaw,1);
 
 %initialize progress display
 if verbose
